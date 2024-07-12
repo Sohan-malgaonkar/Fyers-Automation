@@ -1,0 +1,78 @@
+from fyers_apiv3 import fyersModel
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+import json
+import pyotp
+
+file_path = 'import your credentils file name.json'
+grant_type = "authorization_code"
+response_type = "code"
+state = "sample"
+
+with open(file_path, 'r') as file:
+    data = json.load(file)
+    for key, value in data.items():
+        if value['broker'] == "fyers":
+            your_username = value['client_id']
+            your_password = value['pin']
+            password_list = list(your_password)
+
+            first_pin = value['pin'][0]
+            second_pin = value['pin'][1]
+            third_pin = value['pin'][2]
+            fourth_pin = value['pin'][3]
+
+            Your_TOTP = value['totp_key']
+            Your_Key = value['api_key']
+            My_secret = value['api_secret']
+
+options = Options()
+options.add_argument("--disable-infobars")
+options.add_argument("--disable-extensions")
+options.add_argument("--start-maximized")
+
+driver = webdriver.Chrome(options=options)
+
+appSession = fyersModel.SessionModel(client_id=Your_Key, redirect_uri="https://www.google.com", response_type=response_type, state=state, secret_key=My_secret, grant_type=grant_type)
+generateTokenUrl = appSession.generate_authcode()
+
+driver.get(generateTokenUrl)
+print((generateTokenUrl))
+
+# Wait for the login elements and input credentials
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "fy_client_id"))).send_keys(your_username)
+driver.find_element(By.ID, "clientIdSubmit").click()
+
+# Handle TOTP
+my_totp_key = pyotp.TOTP(str(Your_TOTP))
+my_latest_totp = my_totp_key.now()
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "first"))).send_keys(my_latest_totp)
+driver.find_element(By.ID, "confirmOtpSubmit").click()
+
+# Handle PIN input
+pin_container = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "pin-container")))
+pin_container.find_element(By.ID, "first").send_keys(first_pin)
+pin_container.find_element(By.ID, "second").send_keys(second_pin)
+pin_container.find_element(By.ID, "third").send_keys(third_pin)
+pin_container.find_element(By.ID, "fourth").send_keys(fourth_pin)
+driver.find_element(By.ID, "verifyPinSubmit").click()
+
+# Extract auth_code from URL
+time.sleep(5)
+current_url = driver.current_url
+auth_code = current_url.split("auth_code=")[-1].split("&")[0]
+
+appSession.set_token(auth_code)
+response = appSession.generate_token()
+
+try:
+    access_token = response["access_token"]
+except Exception as e:
+    print(e, response)
+
+fyers = fyersModel.FyersModel(token=access_token, is_async=False, client_id=your_username, log_path="")
+print(fyers.get_profile())
