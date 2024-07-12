@@ -1,0 +1,68 @@
+#fyers auto login
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
+import time
+import json
+import pyotp
+
+file_path = 'import here your credentilas file name.json'
+
+# Read credentilas from json.
+with open(file_path, 'r') as file:
+    data = json.load(file)
+    for key,value in data.items():
+        if value['broker']== "fyers":
+        # print(value['client_id'], value['broker'])
+        #    print(value['broker'], value['client_id'])
+            your_username=(value['client_id'])
+
+            your_password=(value['pin'])
+            password_list = []
+            password_list.append(your_password)
+            first_pin = value['pin'][0]
+            second_pin = value['pin'][1]
+            third_pin = value['pin'][2]
+            fourth_pin = value['pin'][3]
+            Your_TOTP=(value['totp_key'])
+            Your_Key=(value['api_key'])
+            My_secret=(value['api_secret'])
+
+options = Options()
+options.add_argument("--disable-infobars")
+options.add_argument("--disable-extensions")
+options.add_argument("--start-maximized")
+
+driver = webdriver.Chrome(options=options)
+
+# Open the Fyers login page
+driver.get('https://login.fyers.in/?cb=https://fyers.in/')
+time.sleep(4)
+
+# Locate the login elements and input credentials
+driver.find_element("id","login_client_id").click()
+driver.find_element("id","fy_client_id").send_keys(str(your_username))
+time.sleep(25)
+driver.find_element("id","success-icon").click()
+driver.find_element("id","clientIdSubmit").click()
+time.sleep(5)
+
+#totp Authontication.
+my_totp_key=pyotp.TOTP(str(Your_TOTP))
+my_latest_totp=my_totp_key.now()
+driver.find_element("id","first").send_keys(str(my_latest_totp))
+driver.find_element("id","confirmOtpSubmit").click()
+time.sleep(2)
+
+#Fyers pin verification
+driver.find_element('id', 'pin-container').find_element("id","first").send_keys(first_pin)
+driver.find_element('id', 'pin-container').find_element("id","second").send_keys(second_pin)
+driver.find_element('id', 'pin-container').find_element("id","third").send_keys(str(third_pin))
+driver.find_element('id', 'pin-container').find_element("id","fourth").send_keys(str(fourth_pin))
+driver.find_element("id","verifyPinSubmit").click()
+time.sleep(2)
+
+
