@@ -1,0 +1,18 @@
+{
+    "0": {
+        "broker": "Fyers",
+        "client_id": "xxxxxx",
+        "api_key": "xxxxxxxxxx",
+        "api_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "pin": "xxxxxxxxx",
+        "totp_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "1": {
+        "broker": "Fyers",
+        "client_id": "xxxxxx",
+        "api_key": "xxxxxxxxxxx",
+        "api_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "pin": "xxxxxxxxx",
+        "totp_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+}
